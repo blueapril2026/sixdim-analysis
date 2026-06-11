@@ -12,7 +12,12 @@ jobs:
       - name: 安装系统依赖
         run: |
           sudo apt-get update
+          sudo apt-get install -y software-properties-common
+          sudo add-apt-repository -y ppa:ethereum/ethereum
+          sudo apt-get update
           sudo apt-get install -y solc graphviz
+          # 安装 Go (用于 go 项目)
+          sudo apt-get install -y golang-go
 
       - name: 设置 Python
         uses: actions/setup-python@v5
