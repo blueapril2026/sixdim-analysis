@@ -12,6 +12,8 @@ jobs:
       - name: 安装依赖
         run: |
           sudo apt-get update
+          sudo add-apt-repository -y ppa:ethereum/ethereum
+          sudo apt-get update
           sudo apt-get install -y solc graphviz
           pip install pandas numpy matplotlib seaborn requests gitpython networkx scikit-learn tqdm
 
