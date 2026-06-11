@@ -1,0 +1,24 @@
+name: 分析 Terra-Luna
+on:
+  workflow_dispatch:
+jobs:
+  analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      - name: 安装依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y software-properties-common
+          sudo add-apt-repository -y ppa:ethereum/ethereum
+          sudo apt-get update
+          sudo apt-get install -y solc graphviz
+          pip install pandas numpy matplotlib seaborn requests gitpython networkx scikit-learn tqdm
+      - name: 运行分析（仅 Terra-Luna）
+        run: python script.py --project Terra-Luna
+      - name: 上传报告
+        uses: actions/upload-artifact@v4
+        with:
+          name: terra-luna-report
+          path: Terra-Luna.png
