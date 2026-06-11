@@ -1,9 +1,15 @@
 import os, sys, shutil, subprocess, tempfile, glob
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from git import Repo
 import requests
+
+# 确保保存路径为当前工作目录（即仓库根目录）
+OUTPUT_DIR = os.getcwd()
+print(f"Output directory: {OUTPUT_DIR}")
 
 PROJECTS = {
     'Terra-Luna': {'repo': 'https://github.com/terra-money/core.git', 'lang': 'go', 'crash': '2022-05-11', 'type': '结构性欺骗'},
@@ -15,14 +21,14 @@ PROJECTS = {
 
 def clone_repo(url, target):
     if os.path.exists(target): shutil.rmtree(target)
+    print(f'Cloning {url} into {target}')
     Repo.clone_from(url, target, depth=1)
 
 def get_commits(repo_path):
     os.chdir(repo_path)
     res = subprocess.run(['git', 'log', '--format=%H,%ct'], capture_output=True, text=True)
-    lines = res.stdout.strip().split('\n')
     data = []
-    for line in lines:
+    for line in res.stdout.strip().split('\n'):
         if ',' in line:
             h, ts = line.split(',')
             data.append((h, int(ts)))
@@ -82,6 +88,7 @@ for name, info in PROJECTS.items():
         commits['alpha'] = commits['theta'] + commits['phi']
         commits['sigma'] = np.tanh(5.0 * (np.pi - np.abs(commits['alpha'])))
         commits['icdi'] = 100 * (0.3*commits['x1'] + 0.25*commits['x2'] + 0.25*(commits['phi']+np.pi)/(2*np.pi) + 0.2*(1-commits['x5']))
+        # 绘图
         fig, axs = plt.subplots(4,1,figsize=(12,10))
         axs[0].plot(commits['timestamp'], commits['alpha'])
         if info['crash']: axs[0].axvline(pd.to_datetime(info['crash']), color='r', linestyle='--')
@@ -95,11 +102,14 @@ for name, info in PROJECTS.items():
         axs[3].axhline(50, color='orange', linestyle='--')
         plt.suptitle(f'{name} ({info["type"]})')
         plt.tight_layout()
-        plt.savefig(f'{name}.png')
+        # 使用绝对路径保存到 OUTPUT_DIR
+        img_path = os.path.join(OUTPUT_DIR, f'{name}.png')
+        plt.savefig(img_path)
         plt.close()
+        print(f'Saved {img_path}')
         results[name] = {'type':info['type'],'sigma_min':commits['sigma'].min(),'icdi_min':commits['icdi'].min(),'crash_alert':'是' if (info['crash'] and commits['sigma'].min()<0) else '否'}
     except Exception as e:
-        print(f'Error: {e}')
+        print(f'Error processing {name}: {e}')
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
